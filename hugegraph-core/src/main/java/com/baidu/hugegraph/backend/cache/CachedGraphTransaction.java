@@ -50,17 +50,20 @@ public class CachedGraphTransaction extends GraphTransaction {
 
     public CachedGraphTransaction(HugeGraph graph, BackendStore store) {
         super(graph, store);
-        this.verticesCache = this.cache("vertex");
-        this.edgesCache = this.cache("edge");
+
+        HugeConfig conf = graph.configuration();
+
+        int capacity = conf.get(CoreOptions.VERTEX_CACHE_CAPACITY);
+        int expire = conf.get(CoreOptions.VERTEX_CACHE_EXPIRE);
+        this.verticesCache = this.cache("vertex", capacity, expire);
+
+        capacity = conf.get(CoreOptions.EDGE_CACHE_CAPACITY);
+        expire = conf.get(CoreOptions.EDGE_CACHE_EXPIRE);
+        this.edgesCache = this.cache("edge", capacity, expire);
     }
 
-    private Cache cache(String prefix) {
-        HugeConfig conf = super.graph().configuration();
-
-        final String name = prefix + "-" + super.graph().name();
-        final int capacity = conf.get(CoreOptions.GRAPH_CACHE_CAPACITY);
-        final int expire = conf.get(CoreOptions.GRAPH_CACHE_EXPIRE);
-
+    private Cache cache(String prefix, int capacity, long expire) {
+        String name = prefix + "-" + super.graph().name();
         Cache cache = CacheManager.instance().cache(name, capacity);
         cache.expire(expire);
         return cache;
